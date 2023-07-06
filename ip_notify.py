@@ -15,21 +15,38 @@ IP_PROVIDERS = [
     "https://1.0.0.1/cdn-cgi/trace",
 ]
 
+
 def get_args() -> Namespace:
     args = argparse.ArgumentParser()
-    args.add_argument("--webhook", type=str)
-    args.add_argument("-o", "--cache-dir", type=str, required=False)
+    args.add_argument(
+        "--webhook",
+        type=str,
+        help="URL of Discord webhook endpoint",
+    )
+    args.add_argument(
+        "-o",
+        "--cache-dir",
+        type=str,
+        help="File to store IP",
+    )
+    args.add_argument(
+        "--test",
+        action="store_true",
+        help="Always send the webhook data",
+    )
     return args.parse_args()
+
 
 def get_config() -> Namespace:
     args = get_args()
     config = Namespace()
+    config.test = args.test
     config.webhook = args.webhook or os.getenv("WEBHOOK_URL")
     config.embed_color = os.getenv("EMBED_COLOR", "1bb106")
     config.author_url = os.getenv("AUTHOR_URL", "https://github.com/jack-mil/ip-notify")
     config.icon_url = os.getenv("ICON_URL", "https://1.1.1.1/favicon.ico")
 
-    config.ip_cache =  args.cache_dir or os.getenv("IP_CACHE")
+    config.ip_cache = args.cache_dir or os.getenv("IP_CACHE")
     # Create the default directory if no env var
     if config.ip_cache is None:
         cache_home = os.path.join(
@@ -56,11 +73,12 @@ def setup_logging():
 
     log_file = os.getenv("LOG_FILE")
     if log_file is not None:
-        file_handler = RotatingFileHandler(filename=log_file, maxBytes=5 * 1e3, backupCount=1)
+        file_handler = RotatingFileHandler(
+            filename=log_file, maxBytes=5 * 1e3, backupCount=1
+        )
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.INFO)
         logger.addHandler(file_handler)
-
 
 
 def send_notification(webhook_url, current_ip, old_ip, config):
@@ -136,10 +154,11 @@ if __name__ == "__main__":
 
     cache_path = config.ip_cache
     url = config.webhook
-    
 
     if url is None:
-        logging.error("Must configure a Discord Webhook endpoint using args or env vars")
+        logging.error(
+            "Must configure a Discord Webhook endpoint using args or env vars"
+        )
         exit(1)
 
     logging.info(f"Checking for IP changes")
@@ -149,10 +168,10 @@ if __name__ == "__main__":
     if current is None:
         logging.error("Could not determine public IP. Task failed")
 
-    elif old is None:
+    elif old is None or config.test:
         logging.info(f"First time detected. IP is [{current}]")
         send_notification(
-            webhook_url=url, current_ip=current, old_ip="Unknown", config=config
+            webhook_url=url, current_ip=current, old_ip=old, config=config
         )
         save_current_ip(current, cache_path)
 

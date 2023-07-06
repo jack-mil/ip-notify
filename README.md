@@ -25,6 +25,7 @@ and checks for differences on next run
 ## Args
 - `--webhook` The Discord webhook endpoint (Required)
 - `-o | --cache-dir` The file to write save the previous ip to (Default: `$XDG_CONFIG_HOME/ip-notify/old_ip`)
+- `--test` Send the webhook even if the IP hasn't changed
 
 ## Env Vars
 Most useful when running in Docker (See `docker-compose.yml`).

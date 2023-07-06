@@ -10,7 +10,7 @@
 crontab /data/crontab
 
 # Execute once to ensure webhook working
-python /app/ip_notify.py
+python /app/ip_notify.py --test
 
 # Then run the image CMD (crond -f)
 exec "$@"
