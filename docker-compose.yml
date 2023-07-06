@@ -15,7 +15,7 @@ services:
       # The color of the Discord Embed in hex
       - EMBED_COLOR=1bb106
       # The link when clicking the Embed author
-      - AUTHOR_URL=https://github.com/jack-mil
+      - AUTHOR_URL=https://github.com/jack-mil/ip-notify
       # The icon for the Embed and User avatar
       - ICON_URL=https://1.1.1.1/favicon.ico
       # The file (in the container) to store the previous ip

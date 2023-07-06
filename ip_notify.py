@@ -26,7 +26,7 @@ def get_config() -> Namespace:
     config = Namespace()
     config.webhook = args.webhook or os.getenv("WEBHOOK_URL")
     config.embed_color = os.getenv("EMBED_COLOR", "1bb106")
-    config.author_url = os.getenv("AUTHOR_URL", "https://github.com/jack-mil")
+    config.author_url = os.getenv("AUTHOR_URL", "https://github.com/jack-mil/ip-notify")
     config.icon_url = os.getenv("ICON_URL", "https://1.1.1.1/favicon.ico")
 
     config.ip_cache =  args.cache_dir or os.getenv("IP_CACHE")
