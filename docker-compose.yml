@@ -1,12 +1,11 @@
 version: '3'
 
 services:
-  ip_notify:
+  ip-change:
     build: 
       context: .
       network: host
-    container_name: ip_notify
-
+    container_name: ip-change
     volumes:
       - ./data:/data
     environment:

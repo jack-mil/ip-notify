@@ -13,4 +13,5 @@ crontab /data/crontab
 python /app/ip_notify.py --test
 
 # Then run the image CMD (crond -f)
+echo "$@"
 exec "$@"
