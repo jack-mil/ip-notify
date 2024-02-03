@@ -1,1 +1,1 @@
-*/30 * * * * python /app/ip_notify.py
+*/90 * * * * python /app/ip_notify.py

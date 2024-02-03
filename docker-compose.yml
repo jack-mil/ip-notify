@@ -8,6 +8,7 @@ services:
     container_name: ip-change
     volumes:
       - ./data:/data
+    # user: '1000'
     environment:
       # The discord webhook url. Include here or in .env file
       - WEBHOOK_URL=${WEBHOOK_URL}
@@ -23,4 +24,4 @@ services:
       - LOG_FILE=/data/logs.txt
       # Time Zone for logs
       - TZ=America/New_York
-    dns: 1.1.1.1
+        #    dns: 1.1.1.1
