@@ -4,9 +4,10 @@ import requests
 import os
 import logging
 from logging.handlers import RotatingFileHandler
-from discord_webhook import DiscordWebhook, DiscordEmbed
 import argparse
 from argparse import Namespace
+import services.discord as discord
+import services.msteams as teams
 
 IP_PROVIDERS = [
     # "http://ifconfig.me",
@@ -18,10 +19,13 @@ IP_PROVIDERS = [
 
 def get_args() -> Namespace:
     args = argparse.ArgumentParser()
+    args.add_argument("--service",
+                      type=str,
+                      help="Type of service to send webhook to; e.g. discord or teams")
     args.add_argument(
         "--webhook",
         type=str,
-        help="URL of Discord webhook endpoint",
+        help="URL of webhook endpoint",
     )
     args.add_argument(
         "-o",
@@ -41,6 +45,7 @@ def get_config() -> Namespace:
     args = get_args()
     config = Namespace()
     config.test = args.test
+    config.service = args.service or os.getenv("WEBHOOK_SERVICE")
     config.webhook = args.webhook or os.getenv("WEBHOOK_URL")
     config.embed_color = os.getenv("EMBED_COLOR", "1bb106")
     config.author_url = os.getenv("AUTHOR_URL", "https://github.com/jack-mil/ip-notify")
@@ -82,30 +87,16 @@ def setup_logging():
 
 
 def send_notification(webhook_url, current_ip, old_ip, config):
-    webhook = DiscordWebhook(
-        url=webhook_url, username="IP Notify", avatar_url=config.author_url
-    )
-    # Create and format the embed
-    embed = DiscordEmbed(title="IP Address Changed", color=config.embed_color)
-    embed.set_author(
-        name="IP Notify",
-        url=config.author_url,
-        icon_url=config.icon_url,
-    )
-
-    # Add embed fields with Discord formatting
-    embed.add_embed_field(name="New :green_circle:", value=f"**{current_ip}**")
-    embed.add_embed_field(name="Old :red_circle:", value=f"~~{old_ip}~~")
-    # Set footer timestamp to now
-    embed.set_footer(text="Occured")
-    embed.set_timestamp()
-
-    # Add the embed
-    webhook.add_embed(embed)
-
-    # Send the webhook notification
-    response = webhook.execute()
-    logging.info("Sent discord notification")
+    if config.service.lower() == 'discord':
+        if discord.DiscordWebhookService.send_notification(webhook_url, current_ip, old_ip, config):
+            logging.info("Sent Discord notification")
+        else:
+            logging.error('Failed to send Discord notification')
+    elif config.service.lower() == 'msteams':
+        if teams.TeamsWebhookService.send_notification(webhook_url, current_ip, old_ip, config):
+            logging.info('Send Teams notification')
+        else:
+            logging.error('Failed to send Teams notification')
 
 
 def get_current_ip(providers: list[str]):
@@ -144,7 +135,6 @@ def save_current_ip(ip: str, ip_file: str):
             f.write(ip)
     except OSError as e:
         logger.error(f"OSERROR: Could not save current IP: {e}")
-
 
 if __name__ == "__main__":
     """Run once to check current IP against old IP and notify if changed"""
