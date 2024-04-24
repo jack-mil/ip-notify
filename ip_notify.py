@@ -96,7 +96,7 @@ def send_notification(webhook_url, current_ip, old_ip, config):
             logging.error('Failed to send Discord notification')
     elif config.service.lower() == 'msteams':
         if teams.TeamsWebhookService.send_notification(webhook_url, current_ip, old_ip, config):
-            logging.info('Send Teams notification')
+            logging.info('Sent Teams notification')
         else:
             logging.error('Failed to send Teams notification')
 
