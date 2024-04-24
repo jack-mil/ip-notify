@@ -3,7 +3,8 @@ from services.ServiceInterface import WebhookServiceInterface
 
 
 class DiscordWebhookService(WebhookServiceInterface):
-    def send_notification(self, url, current_ip, old_ip, config) -> bool:
+    @staticmethod
+    def send_notification(url, current_ip, old_ip, config) -> bool:
         webhook = DiscordWebhook(
             url=url, username="IP Notify", avatar_url=config.author_url
         )
