@@ -1,8 +1,8 @@
 ﻿from discord_webhook import DiscordWebhook, DiscordEmbed
-import ServiceInterface
+from services.ServiceInterface import WebhookServiceInterface
 
 
-class DiscordWebhookService(ServiceInterface.WebhookServiceInterface):
+class DiscordWebhookService(WebhookServiceInterface):
     def send_notification(self, url, current_ip, old_ip, config) -> bool:
         webhook = DiscordWebhook(
             url=url, username="IP Notify", avatar_url=config.author_url

@@ -1,11 +1,10 @@
 ﻿import requests
-
-import ServiceInterface
+from services.ServiceInterface import WebhookServiceInterface
 
 
 # Inspiration from https://stackoverflow.com/questions/59371631/send-automated-messages-to-microsoft-teams-using-python
 
-class TeamsWebhookService(ServiceInterface.WebhookServiceInterface):
+class TeamsWebhookService(WebhookServiceInterface):
     def send_notification(self, url, current_ip, old_ip, config) -> bool:
         jsonData = {
             "text": "IP address change detected: \n Old: %s \n New: %s" % (old_ip, current_ip)
