@@ -10,8 +10,10 @@ services:
       - ./data:/data
     # user: '1000'
     environment:
-      # The discord webhook url. Include here or in .env file
+      # The webhook url. Include here or in .env file
       - WEBHOOK_URL=${WEBHOOK_URL}
+      # The service used to post webhooks to
+      - WEBHOOK_SERVICE=discord
       # The color of the Discord Embed in hex
       - EMBED_COLOR=1bb106
       # The link when clicking the Embed author
