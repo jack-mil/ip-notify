@@ -12,6 +12,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 COPY ip_notify.py .
+RUN mkdir /app/services
+ADD services ./services/
 
 # Copy entrypoint
 COPY --chmod=744 entrypoint.sh .

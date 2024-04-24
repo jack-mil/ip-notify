@@ -19,9 +19,11 @@ IP_PROVIDERS = [
 
 def get_args() -> Namespace:
     args = argparse.ArgumentParser()
-    args.add_argument("--service",
-                      type=str,
-                      help="Type of service to send webhook to; e.g. discord or teams")
+    args.add_argument(
+        "--service",
+        type=str,
+        help="Type of service to send webhook to; e.g. discord or teams",
+    )
     args.add_argument(
         "--webhook",
         type=str,
