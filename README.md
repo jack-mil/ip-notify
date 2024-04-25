@@ -1,9 +1,9 @@
 # IP Notify
 
-## Sends a Discord webhook notification when your public IP changes
+## Sends a webhook notification when your public IP changes
 
 Explanation: I run a number of services behind a NAT at home which are only 
-accessible through a WireGuard VPN. My IP rarely if ever changes, but it it does,
+accessible through a WireGuard VPN. My IP rarely if ever changes, but if it does,
 this script will send me a Discord notification so I can update my VPN endpoint
 while away from home.
 
@@ -23,14 +23,17 @@ and checks for differences on next run
 - Or run the supplied docker image and compose project (cron in docker)
 
 ## Args
-- `--webhook` The Discord webhook endpoint (Required)
+- `--service` The desired service to send the notification to. Currently, `discord` and `msteams` are possible options.
+- `--webhook` The webhook endpoint (Required)
 - `-o | --cache-dir` The file to write save the previous ip to (Default: `$XDG_CONFIG_HOME/ip-notify/old_ip`)
 - `--test` Send the webhook even if the IP hasn't changed
 
 ## Env Vars
 Most useful when running in Docker (See `docker-compose.yml`).
 ```
-# The discord webhook url. Include here or in .env file
+# The desired webhook service to use.
+WEBHOOK_SERVICE=discord
+# The webhook url. Include here or in .env file
 WEBHOOK_URL=${WEBHOOK_URL}
 # The color of the Discord Embed in hex
 EMBED_COLOR=1bb106

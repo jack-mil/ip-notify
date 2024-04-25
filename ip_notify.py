@@ -7,7 +7,7 @@ from logging.handlers import RotatingFileHandler
 import argparse
 from argparse import Namespace
 import services.discord as discord
-import services.msteams as teams
+import services.msteams as msteams
 
 IP_PROVIDERS = [
     # "http://ifconfig.me",
@@ -22,7 +22,7 @@ def get_args() -> Namespace:
     args.add_argument(
         "--service",
         type=str,
-        help="Type of service to send webhook to; e.g. discord or teams",
+        help="Type of service to send webhook to; e.g. discord or msteams",
     )
     args.add_argument(
         "--webhook",
@@ -95,7 +95,7 @@ def send_notification(webhook_url, current_ip, old_ip, config):
         else:
             logging.error('Failed to send Discord notification')
     elif config.service.lower() == 'msteams':
-        if teams.TeamsWebhookService.send_notification(webhook_url, current_ip, old_ip, config):
+        if msteams.TeamsWebhookService.send_notification(webhook_url, current_ip, old_ip, config):
             logging.info('Sent Teams notification')
         else:
             logging.error('Failed to send Teams notification')
