@@ -10,10 +10,10 @@ import services.discord as discord
 import services.msteams as msteams
 
 IP_PROVIDERS = [
-    # "http://ifconfig.me",
-    # "http://ip.me",
-    "https://1.1.1.1/cdn-cgi/trace",
-    "https://1.0.0.1/cdn-cgi/trace",
+    "http://ifconfig.me",
+    "http://ip.me",
+    # "https://1.1.1.1/cdn-cgi/trace",
+    # "https://1.0.0.1/cdn-cgi/trace",
 ]
 
 
@@ -107,8 +107,9 @@ def get_current_ip(providers: list[str]):
         res = requests.get(provider, allow_redirects=False)
         if res.status_code == requests.codes.ok:
             info = res.text.split("\n")
-            info.pop()  # Removes empty string at end of list
-            current_ip = dict(s.split("=") for s in info)["ip"]
+            # info.pop()  # Removes empty string at end of list
+            # current_ip = dict(s.split("=") for s in info)["ip"]
+            current_ip = info[0]
 
             logging.debug(f"Public ip [{current_ip}] grabbed from [{provider}]")
             return current_ip
