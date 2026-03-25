@@ -1,4 +1,4 @@
-# IP Notify
+# [IP Notify](https://codeberg.org/jack-mil/ip-notify)
 
 ## Sends a Discord webhook notification when your public IP changes
 
@@ -8,13 +8,15 @@ this script will send me a Discord notification so I can update my VPN endpoint
 while away from home.
 
 Yes, obviously this problem is solved with a DDNS service, of which there are many.
-But, I don't have any public DNS records and only need the IP endpoint for WireGaurd.
+But, I don't have any public DNS records and only need the IP endpoint for WireGuard.
 
 Runs in a Docker container running cron every 30 minutes.
 
 Can just as easily be adapted to run on the host instead.
 
 Uses Cloudflare's zero-log ip lookup (https://1.1.1.1/cdn-cgi/trace)
+
+Repo has moved to Codeberg, the Github mirror may not be updated indefinitely. See: [Give up GitHub](https://GiveUpGitHub.org)
 
 ## Usage
 - The script `ip_notify.py` runs as a oneshot service. It caches the current ip to a file
@@ -43,6 +45,7 @@ IP_CACHE=/data/ip.txt
 # An additional log file (in the container)
 LOG_FILE=/data/logs.txt
 ```
+
 ## Developing
 - Install python requirements with pip from requirements.txt
 
@@ -53,3 +56,4 @@ LOG_FILE=/data/logs.txt
 > Thanks to these projects for inspiration:
 > - https://github.com/timothymiller/cloudflare-ddns
 > - https://github.com/teobouvard/turnip
+
