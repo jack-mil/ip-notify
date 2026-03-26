@@ -22,7 +22,7 @@ Repo has moved to Codeberg, the Github mirror may not be updated indefinitely. S
 - The script `ip_notify.py` runs as a oneshot service. It caches the current ip to a file
 and checks for differences on next run
 - Run as a cron job
-- Or run the supplied docker image and compose project (cron in docker)
+- Or run the supplied docker image and/or Compose project (cron in docker)
 
 ## Args
 - `--webhook` The Discord webhook endpoint (Required)
@@ -47,9 +47,7 @@ LOG_FILE=/data/logs.txt
 ```
 
 ## Developing
-- Install python requirements with pip from requirements.txt
-
-- Alternatively, a VS Code Dev container config is supplied
+- Since this is a simple single-file script, the easiest method is to use [uv](https://docs.astral.sh/uv/guides/scripts/) to manage the dependencies. Inline script metadata is provided, and a lock file for dependencies. 
 
 - Dockerfile and an example Docker Compose project are provided if preferred
 
