@@ -14,7 +14,7 @@ Runs in a Docker container running cron every 30 minutes.
 
 Can just as easily be adapted to run on the host instead.
 
-Uses Cloudflare's zero-log ip lookup (https://1.1.1.1/cdn-cgi/trace)
+Makes use of [Mullvad](https://am.i.mullvad.net/ip) or [Proton](https://ip.me) ip-lookup service.
 
 Repo has moved to Codeberg, the Github mirror may not be updated indefinitely. See: [Give up GitHub](https://GiveUpGitHub.org)
 

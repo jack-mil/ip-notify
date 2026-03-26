@@ -9,10 +9,8 @@ import argparse
 from argparse import Namespace
 
 IP_PROVIDERS = [
-    # "http://ifconfig.me",
-    # "http://ip.me",
-    "https://1.1.1.1/cdn-cgi/trace",
-    "https://1.0.0.1/cdn-cgi/trace",
+    "https://am.i.mullvad.net/ip", # See: https://mullvad.net/en/check
+    "https://ip.me/" # See: https://ip.me/about
 ]
 
 
@@ -43,8 +41,7 @@ def get_config() -> Namespace:
     config.test = args.test
     config.webhook = args.webhook or os.getenv("WEBHOOK_URL")
     config.embed_color = os.getenv("EMBED_COLOR", "1bb106")
-    config.author_url = os.getenv("AUTHOR_URL", "https://github.com/jack-mil/ip-notify")
-    config.icon_url = os.getenv("ICON_URL", "https://1.1.1.1/favicon.ico")
+    config.author_url = os.getenv("AUTHOR_URL", "https://codeberg.org/jack-mil/ip-notify")
 
     config.ip_cache = args.cache_dir or os.getenv("IP_CACHE")
     # Create the default directory if no env var
@@ -97,7 +94,7 @@ def send_notification(webhook_url, current_ip, old_ip, config):
     embed.add_embed_field(name="New :green_circle:", value=f"**{current_ip}**")
     embed.add_embed_field(name="Old :red_circle:", value=f"~~{old_ip}~~")
     # Set footer timestamp to now
-    embed.set_footer(text="Occured")
+    embed.set_footer(text="Occurred")
     embed.set_timestamp()
 
     # Add the embed
@@ -109,13 +106,12 @@ def send_notification(webhook_url, current_ip, old_ip, config):
 
 
 def get_current_ip(providers: list[str]):
-    """Uses Cloudflare trace service to lookup current public IP"""
+    """Uses Mullvad or Proton VPN trace service to lookup current public IP"""
     for provider in providers:
-        res = requests.get(provider, allow_redirects=False)
+        res = requests.get(provider, allow_redirects=False, timeout=1.5)
         if res.status_code == requests.codes.ok:
             info = res.text.split("\n")
-            info.pop()  # Removes empty string at end of list
-            current_ip = dict(s.split("=") for s in info)["ip"]
+            current_ip = info[0] # both providers return a single line with the ip address
 
             logging.debug(f"Public ip [{current_ip}] grabbed from [{provider}]")
             return current_ip
