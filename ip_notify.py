@@ -42,6 +42,7 @@ def get_config() -> Namespace:
     config.webhook = args.webhook or os.getenv("WEBHOOK_URL")
     config.embed_color = os.getenv("EMBED_COLOR", "1bb106")
     config.author_url = os.getenv("AUTHOR_URL", "https://codeberg.org/jack-mil/ip-notify")
+    config.icon_url = os.getenv("ICON_URL", None)
 
     config.ip_cache = args.cache_dir or os.getenv("IP_CACHE")
     # Create the default directory if no env var
