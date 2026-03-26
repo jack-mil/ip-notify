@@ -3,10 +3,7 @@ revision = 3
 requires-python = ">=3.11"
 
 [manifest]
-requirements = [
-    { name = "discord-webhook", specifier = "<2" },
-    { name = "requests", specifier = "<3" },
-]
+requirements = [{ name = "requests", specifier = "<3" }]
 
 [[package]]
 name = "certifi"
@@ -104,18 +101,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/5d/7a/d269d834cb3a76291651256f3b9a5945e81d0a49ab9f4a498964e83c0416/charset_normalizer-3.4.6-cp314-cp314t-win_amd64.whl", hash = "sha256:cd5e2801c89992ed8c0a3f0293ae83c159a60d9a5d685005383ef4caca77f2c4", size = 169043, upload-time = "2026-03-15T18:52:28.502Z" },
     { url = "https://files.pythonhosted.org/packages/23/06/28b29fba521a37a8932c6a84192175c34d49f84a6d4773fa63d05f9aff22/charset_normalizer-3.4.6-cp314-cp314t-win_arm64.whl", hash = "sha256:47955475ac79cc504ef2704b192364e51d0d473ad452caedd0002605f780101c", size = 148523, upload-time = "2026-03-15T18:52:29.956Z" },
     { url = "https://files.pythonhosted.org/packages/2a/68/687187c7e26cb24ccbd88e5069f5ef00eba804d36dde11d99aad0838ab45/charset_normalizer-3.4.6-py3-none-any.whl", hash = "sha256:947cf925bc916d90adba35a64c82aace04fa39b46b52d4630ece166655905a69", size = 61455, upload-time = "2026-03-15T18:53:23.833Z" },
-]
-
-[[package]]
-name = "discord-webhook"
-version = "1.4.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/89/35/4837053ab7d781983c2dce787c5dda42918c3b2936ccadf4e097057ca29a/discord_webhook-1.4.1.tar.gz", hash = "sha256:2913c3ccb216e7d82911f96296f78b6b28b68a6f33a6fa5a61fc2da697b34a4d", size = 13724, upload-time = "2025-03-05T10:18:08.823Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9b/90/a4db0122694a5657d9434f5c782adc894477a2d17776309290674ba3e7ac/discord_webhook-1.4.1-py3-none-any.whl", hash = "sha256:1ed6a07d16ca0e6e6b1a91536c2fc34d0ba8251e5be37fe8850189aaf1155ee8", size = 13573, upload-time = "2025-03-05T10:18:07.426Z" },
 ]
 
 [[package]]

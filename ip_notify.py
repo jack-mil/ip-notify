@@ -3,7 +3,6 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#     "discord-webhook<2",
 #     "requests<3",
 # ]
 # ///
@@ -12,8 +11,8 @@
 import requests
 import os
 import logging
+from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
-from discord_webhook import DiscordWebhook, DiscordEmbed
 import argparse
 from argparse import Namespace
 
@@ -87,33 +86,39 @@ def setup_logging():
         file_handler.setLevel(logging.INFO)
         logger.addHandler(file_handler)
 
-
 def send_notification(webhook_url, current_ip, old_ip, config):
-    webhook = DiscordWebhook(
-        url=webhook_url, username="IP Notify", avatar_url=config.author_url
-    )
-    # Create and format the embed
-    embed = DiscordEmbed(title="IP Address Changed", color=config.embed_color)
-    embed.set_author(
-        name="IP Notify",
-        url=config.author_url,
-        icon_url=config.icon_url,
-    )
-
-    # Add embed fields with Discord formatting
-    embed.add_embed_field(name="New :green_circle:", value=f"**{current_ip}**")
-    embed.add_embed_field(name="Old :red_circle:", value=f"~~{old_ip}~~")
-    # Set footer timestamp to now
-    embed.set_footer(text="Occurred")
-    embed.set_timestamp()
-
-    # Add the embed
-    webhook.add_embed(embed)
-
-    # Send the webhook notification
-    response = webhook.execute()
-    logging.info("Sent discord notification")
-
+    """Send the Discord webhook POST request directly"""
+    color_decimal = int(config.embed_color.lstrip("#"), 16)
+    payload = {
+        "username": "IP Notify",
+        "avatar_url": config.author_url,
+        "embeds": [{
+                "title": "IP Address Changed",
+                "color": color_decimal,
+                "author": { "name": "IP Notify", "url": config.author_url, "icon_url": config.icon_url },
+                "fields": [
+                    { "name": "New :green_circle:", "value": f"**{current_ip}**", "inline": False },
+                    { "name": "Old :red_circle:", "value": f"~~{old_ip}~~", "inline": False },
+                ],
+                "footer": { "text": "Occurred", },
+                # ISO‑8601 timestamp
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }],
+    }
+    try:
+        response = requests.post(webhook_url, json=payload, timeout=5)
+        if response.status_code >= 400:
+            logging.error(
+                "Failed to send Discord notification: HTTP %s – %s",
+                response.status_code,
+                response.text.strip(),
+            )
+        else:
+            logging.info("Sent discord notification")
+    except requests.exceptions.Timeout as exc:
+        logging.error("Discord webhook request timed out after 5s")
+    except requests.RequestException as exc:
+        logging.error("Send Discord notification failed due to request error: %s", exc,)
 
 def get_current_ip(providers: list[str]):
     """Uses Mullvad or Proton VPN trace service to lookup current public IP"""
@@ -176,16 +181,12 @@ if __name__ == "__main__":
 
     elif old is None or config.test:
         logging.info(f"First time detected. IP is [{current}]")
-        send_notification(
-            webhook_url=url, current_ip=current, old_ip=old, config=config
-        )
+        send_notification(webhook_url=url, current_ip=current, old_ip=old, config=config)
         save_current_ip(current, cache_path)
 
     elif current != old:
         logging.info(f"Public ip changed from {old} to {current}")
-        send_notification(
-            webhook_url=url, current_ip=current, old_ip=old, config=config
-        )
+        send_notification(webhook_url=url, current_ip=current, old_ip=old, config=config)
         save_current_ip(current, cache_path)
 
     else:
