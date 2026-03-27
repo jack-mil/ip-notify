@@ -8,17 +8,19 @@
 # ///
 
 
-import requests
-import os
+import argparse
 import logging
+import os
+from argparse import Namespace
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
-import argparse
-from argparse import Namespace
+from pathlib import Path
+
+import requests
 
 IP_PROVIDERS = [
-    "https://am.i.mullvad.net/ip", # See: https://mullvad.net/en/check
-    "https://ip.me/" # See: https://ip.me/about
+    "https://am.i.mullvad.net/ip",  # See: https://mullvad.net/en/check
+    "https://ip.me/",  # See: https://ip.me/about
 ]
 
 
@@ -31,7 +33,7 @@ def get_args() -> Namespace:
     )
     args.add_argument(
         "-o",
-        "--cache-dir",
+        "--cache-file",
         type=str,
         help="File to store IP",
     )
@@ -49,17 +51,20 @@ def get_config() -> Namespace:
     config.test = args.test
     config.webhook = args.webhook or os.getenv("WEBHOOK_URL")
     config.embed_color = os.getenv("EMBED_COLOR", "1bb106")
-    config.author_url = os.getenv("AUTHOR_URL", "https://codeberg.org/jack-mil/ip-notify")
-    config.icon_url = os.getenv("ICON_URL", None)
+    config.author_url = os.getenv(
+        "AUTHOR_URL", "https://codeberg.org/jack-mil/ip-notify"
+    )
+    config.icon_url = os.getenv("ICON_URL")
 
-    config.ip_cache = args.cache_dir or os.getenv("IP_CACHE")
+    ip_cache_path = args.cache_file or os.getenv("IP_CACHE")
     # Create the default directory if no env var
-    if config.ip_cache is None:
-        cache_home = os.path.join(
-            os.getenv("XDG_CONFIG_HOME") or os.environ["HOME"], ".config", "ip-notify"
-        )
-        os.makedirs(cache_home, exist_ok=True)
-        config.ip_cache = os.path.join(cache_home, "old_ip")
+    if ip_cache_path is None:
+        cache_home = os.getenv("XDG_CACHE_HOME")
+        if cache_home is None:
+            cache_home = os.getenv("HOME") or Path.home()
+        ip_cache_path = Path(cache_home, "ip_notify_cache")
+    config.ip_cache = Path(ip_cache_path)
+    config.ip_cache.parent.mkdir(parents=True, exist_ok=True)
     return config
 
 
@@ -86,24 +91,41 @@ def setup_logging():
         file_handler.setLevel(logging.INFO)
         logger.addHandler(file_handler)
 
-def send_notification(webhook_url, current_ip, old_ip, config):
+
+def send_notification(webhook_url: str, current_ip: str, old_ip: str, config):
     """Send the Discord webhook POST request directly"""
     color_decimal = int(config.embed_color.lstrip("#"), 16)
     payload = {
         "username": "IP Notify",
         "avatar_url": config.author_url,
-        "embeds": [{
+        "embeds": [
+            {
                 "title": "IP Address Changed",
                 "color": color_decimal,
-                "author": { "name": "IP Notify", "url": config.author_url, "icon_url": config.icon_url },
+                "author": {
+                    "name": "IP Notify",
+                    "url": config.author_url,
+                    "icon_url": config.icon_url,
+                },
                 "fields": [
-                    { "name": "New :green_circle:", "value": f"**{current_ip}**", "inline": False },
-                    { "name": "Old :red_circle:", "value": f"~~{old_ip}~~", "inline": False },
+                    {
+                        "name": "New :green_circle:",
+                        "value": f"**{current_ip}**",
+                        "inline": False,
+                    },
+                    {
+                        "name": "Old :red_circle:",
+                        "value": f"~~{old_ip}~~",
+                        "inline": False,
+                    },
                 ],
-                "footer": { "text": "Occurred", },
+                "footer": {
+                    "text": "Occurred",
+                },
                 # ISO‑8601 timestamp
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-            }],
+            }
+        ],
     }
     try:
         response = requests.post(webhook_url, json=payload, timeout=5)
@@ -115,18 +137,23 @@ def send_notification(webhook_url, current_ip, old_ip, config):
             )
         else:
             logging.info("Sent discord notification")
-    except requests.exceptions.Timeout as exc:
+    except requests.exceptions.Timeout:
         logging.error("Discord webhook request timed out after 5s")
     except requests.RequestException as exc:
-        logging.error("Send Discord notification failed due to request error: %s", exc,)
+        logging.error(
+            "Send Discord notification failed due to request error: %s",
+            exc,
+        )
+
 
 def get_current_ip(providers: list[str]):
     """Uses Mullvad or Proton VPN trace service to lookup current public IP"""
     for provider in providers:
         res = requests.get(provider, allow_redirects=False, timeout=1.5)
         if res.status_code == requests.codes.ok:
+            # both providers return a single line with the ip address
             info = res.text.split("\n")
-            current_ip = info[0] # both providers return a single line with the ip address
+            current_ip = info[0]
 
             logging.debug(f"Public ip [{current_ip}] grabbed from [{provider}]")
             return current_ip
@@ -137,24 +164,19 @@ def get_current_ip(providers: list[str]):
 
 def get_last_ip(ip_file: str):
     """Read old ip from a file"""
-    if not os.path.isfile(ip_file):
+    if not ip_file.exists():
         logging.info("No existing ip record found")
         return None
-    try:
-        with open(ip_file, "r") as f:
-            old_ip = f.read()
-            return old_ip
-    except OSError as e:
-        logging.error(f"OSERROR: Reading saved ip file: {e}")
+    old_ip = ip_file.read_text().split("\n")[0]
+    return old_ip
 
 
 def save_current_ip(ip: str, ip_file: str):
     """Saves the current public IP to a file"""
     try:
-        with open(ip_file, "w") as f:
-            f.write(ip)
+        ip_file.write_text(ip + "\n")
     except OSError as e:
-        logger.error(f"OSERROR: Could not save current IP: {e}")
+        logger.error(f"Could not save current IP: {e}")
 
 
 if __name__ == "__main__":
@@ -172,7 +194,7 @@ if __name__ == "__main__":
         )
         exit(1)
 
-    logging.info(f"Checking for IP changes")
+    logging.info("Checking for IP changes")
     current = get_current_ip(IP_PROVIDERS)
     old = get_last_ip(cache_path)
 
@@ -181,12 +203,16 @@ if __name__ == "__main__":
 
     elif old is None or config.test:
         logging.info(f"First time detected. IP is [{current}]")
-        send_notification(webhook_url=url, current_ip=current, old_ip=old, config=config)
+        send_notification(
+            webhook_url=url, current_ip=current, old_ip=old, config=config
+        )
         save_current_ip(current, cache_path)
 
     elif current != old:
         logging.info(f"Public ip changed from {old} to {current}")
-        send_notification(webhook_url=url, current_ip=current, old_ip=old, config=config)
+        send_notification(
+            webhook_url=url, current_ip=current, old_ip=old, config=config
+        )
         save_current_ip(current, cache_path)
 
     else:
