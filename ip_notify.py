@@ -27,9 +27,14 @@ IP_PROVIDERS = [
 def get_args() -> Namespace:
     args = argparse.ArgumentParser()
     args.add_argument(
+        "--service",
+        type=str,
+        help="Service type to send webhook to; discord or msteams (default: discord)",
+    )
+    args.add_argument(
         "--webhook",
         type=str,
-        help="URL of Discord webhook endpoint",
+        help="URL of webhook endpoint",
     )
     args.add_argument(
         "-o",
@@ -49,6 +54,7 @@ def get_config() -> Namespace:
     args = get_args()
     config = Namespace()
     config.test = args.test
+    config.service = args.service or os.getenv("WEBHOOK_SERVICE") or "discord"
     config.webhook = args.webhook or os.getenv("WEBHOOK_URL")
     config.embed_color = os.getenv("EMBED_COLOR", "1bb106")
     config.author_url = os.getenv(
@@ -92,8 +98,40 @@ def setup_logging():
         logger.addHandler(file_handler)
 
 
-def send_notification(webhook_url: str, current_ip: str, old_ip: str, config):
-    """Send the Discord webhook POST request directly"""
+def send_notification(webhook_url: str, new_ip: str, old_ip: str, config):
+    """Send the webhook POST request directly"""
+    match config.service:
+        case "discord":
+            func = discord_data
+        case "msteams":
+            func = teams_data
+        case err:
+            logging.error("Unsupported webhook service %s", err)
+            return
+    payload = func(config, new_ip, old_ip)
+    try:
+        response = requests.post(webhook_url, json=payload, timeout=5)
+        if response.status_code >= 400:
+            logging.error(
+                "Failed to send %s notification: HTTP %s – %s",
+                config.service,
+                response.status_code,
+                response.text.strip(),
+            )
+        else:
+            logging.info("Sent %s notification", config.service)
+    except requests.exceptions.Timeout:
+        logging.error("%s webhook request timed out after 5s", config.service)
+    except requests.RequestException as exc:
+        logging.error(
+            "Send %s notification failed due to request error: %s",
+            config.service,
+            exc,
+        )
+
+
+def discord_data(config, new_ip: str, old_ip: str) -> dict:
+    """Construct payload data for Discord webhook"""
     color_decimal = int(config.embed_color.lstrip("#"), 16)
     payload = {
         "username": "IP Notify",
@@ -110,7 +148,7 @@ def send_notification(webhook_url: str, current_ip: str, old_ip: str, config):
                 "fields": [
                     {
                         "name": "New :green_circle:",
-                        "value": f"**{current_ip}**",
+                        "value": f"**{new_ip}**",
                         "inline": False,
                     },
                     {
@@ -122,28 +160,46 @@ def send_notification(webhook_url: str, current_ip: str, old_ip: str, config):
                 "footer": {
                     "text": "Occurred",
                 },
-                # ISO‑8601 timestamp
+                # ISO-8601 timestamp
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         ],
     }
-    try:
-        response = requests.post(webhook_url, json=payload, timeout=5)
-        if response.status_code >= 400:
-            logging.error(
-                "Failed to send Discord notification: HTTP %s – %s",
-                response.status_code,
-                response.text.strip(),
-            )
-        else:
-            logging.info("Sent discord notification")
-    except requests.exceptions.Timeout:
-        logging.error("Discord webhook request timed out after 5s")
-    except requests.RequestException as exc:
-        logging.error(
-            "Send Discord notification failed due to request error: %s",
-            exc,
-        )
+    return payload
+
+
+def teams_data(config, old_ip: str, new_ip: str) -> dict:
+    """Construct webhook data for MS Teams webhook"""
+    payload = {
+        "type": "message",
+        "attachments": [
+            {
+                "contentType": "application/vnd.microsoft.card.adaptive",
+                "contentUrl": "null",
+                "content": {
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "version": "1.6",
+                    "type": "AdaptiveCard",
+                    "body": [
+                        {
+                            "type": "TextBlock",
+                            "size": "Medium",
+                            "weight": "Bolder",
+                            "text": "IP Address Changed",
+                        },
+                        {
+                            "type": "FactSet",
+                            "facts": [
+                                {"title": "Old:", "value": old_ip},
+                                {"title": "New:", "value": new_ip},
+                            ],
+                        },
+                    ],
+                },
+            }
+        ],
+    }
+    return payload
 
 
 def get_current_ip(providers: list[str]):
@@ -189,31 +245,25 @@ if __name__ == "__main__":
     url = config.webhook
 
     if url is None:
-        logging.error(
-            "Must configure a Discord Webhook endpoint using args or env vars"
-        )
+        logging.error("Must configure a webhook endpoint using args or env vars")
         exit(1)
 
     logging.info("Checking for IP changes")
-    current = get_current_ip(IP_PROVIDERS)
-    old = get_last_ip(cache_path)
+    new_ip = get_current_ip(IP_PROVIDERS)
+    old_ip = get_last_ip(cache_path)
 
-    if current is None:
+    if new_ip is None:
         logging.error("Could not determine public IP. Task failed")
 
-    elif old is None or config.test:
-        logging.info(f"First time detected. IP is [{current}]")
-        send_notification(
-            webhook_url=url, current_ip=current, old_ip=old, config=config
-        )
-        save_current_ip(current, cache_path)
+    elif old_ip is None or config.test:
+        logging.info(f"First time detected. IP is [{new_ip}]")
+        send_notification(url, new_ip, old_ip, config)
+        save_current_ip(new_ip, cache_path)
 
-    elif current != old:
-        logging.info(f"Public ip changed from {old} to {current}")
-        send_notification(
-            webhook_url=url, current_ip=current, old_ip=old, config=config
-        )
-        save_current_ip(current, cache_path)
+    elif new_ip != old_ip:
+        logging.info(f"Public ip changed from {old_ip} to {new_ip}")
+        send_notification(url, new_ip, old_ip, config)
+        save_current_ip(new_ip, cache_path)
 
     else:
         logging.info("No change in public IP")
