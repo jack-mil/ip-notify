@@ -178,7 +178,7 @@ def teams_data(config, old_ip: str, new_ip: str) -> dict:
                 "contentUrl": "null",
                 "content": {
                     "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                    "version": "1.6",
+                    "version": "1.2",
                     "type": "AdaptiveCard",
                     "body": [
                         {
