@@ -10,8 +10,6 @@ class TeamsWebhookService(WebhookServiceInterface):
         json_data = TeamsWebhookService.get_card_data(current_ip, old_ip)
         result = requests.post(url, json=json_data)
         return result.ok
-        # No idea if pass is still needed here... Not a python expert
-        pass
 
     @staticmethod
     def get_card_data(current_ip, old_ip):
@@ -19,11 +17,11 @@ class TeamsWebhookService(WebhookServiceInterface):
             "type": "message",
             "attachments": [
                 {
-                    "contentType":"application/vnd.microsoft.card.adaptive",
+                    "contentType": "application/vnd.microsoft.card.adaptive",
                     "contentUrl": "null",
                     "content": {
                         "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                        "version": "1.6",
+                        "version": "1.2",
                         "type": "AdaptiveCard",
                         "body": [
                             {

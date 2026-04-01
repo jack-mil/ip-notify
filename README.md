@@ -46,6 +46,23 @@ IP_CACHE=/data/ip.txt
 # An additional log file (in the container)
 LOG_FILE=/data/logs.txt
 ```
+
+## Service configuration
+### Discord
+- Select the settings icon of the channel you'd like to receive the webhook in
+- Go to "Integrations"
+- Click "Webhooks"
+- Press the "New Webhook" button
+- A new webhook should appear; select this and press the "Copy Webhook URL" button
+
+### Teams
+- Press the meatball menu icon (3 dots, horizontal) next to a Teams channel
+- Select "Workflows"
+- Search for "webhook"
+- Select "Send webhook alerts to a channel"
+- Configure the desired Teams and channel
+- Copy the webhook URL and make sure the workflow is activated
+
 ## Developing
 - Install python requirements with pip from requirements.txt
 
