@@ -2,21 +2,19 @@
 #
 # /// script
 # requires-python = ">=3.11"
-# dependencies = [
-#     "requests<3",
-# ]
 # ///
 
 
 import argparse
+import json
 import logging
 import os
+import urllib.request
 from argparse import Namespace
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-
-import requests
+from urllib.error import HTTPError, URLError
 
 IP_PROVIDERS = [
     "https://am.i.mullvad.net/ip",  # See: https://mullvad.net/en/check
@@ -109,22 +107,35 @@ def send_notification(webhook_url: str, new_ip: str, old_ip: str, config):
             logging.error("Unsupported webhook service %s", err)
             return
     payload = func(config, new_ip, old_ip)
+    body = json.dumps(payload).encode("utf-8")
+    request = urllib.request.Request(
+        webhook_url,
+        method="POST",
+        data=body,
+        headers={"Content-Type": "application/json", "User-Agent": "ip-notify/1.0"},
+    )
     try:
-        response = requests.post(webhook_url, json=payload, timeout=5)
-        if response.status_code >= 400:
-            logging.error(
-                "Failed to send %s notification: HTTP %s – %s",
-                config.service,
-                response.status_code,
-                response.text.strip(),
-            )
-        else:
-            logging.info("Sent %s notification", config.service)
-    except requests.exceptions.Timeout:
+        with urllib.request.urlopen(request, timeout=5) as res:
+            if res.status == 200:
+                logging.info("Sent %s notification", config.service)
+            else:
+                logging.info(
+                    "Sent %s notification (response %s)", config.service, res.status
+                )
+    except TimeoutError:
         logging.error("%s webhook request timed out after 5s", config.service)
-    except requests.RequestException as exc:
+    except HTTPError as exc:
+        error_body = exc.read().decode().strip()
         logging.error(
-            "Send %s notification failed due to request error: %s",
+            "Failed to send %s notification: HTTP %s - { %s } ",
+            config.service,
+            exc.code,
+            error_body,
+        )
+    except URLError as exc:
+        error_body = exc.read().decode().strip()
+        logging.error(
+            "Send %s notification failed due to POST error: %s",
             config.service,
             exc,
         )
@@ -205,16 +216,16 @@ def teams_data(config, old_ip: str, new_ip: str) -> dict:
 def get_current_ip(providers: list[str]):
     """Uses Mullvad or Proton VPN trace service to lookup current public IP"""
     for provider in providers:
-        res = requests.get(provider, allow_redirects=False, timeout=1.5)
-        if res.status_code == requests.codes.ok:
-            # both providers return a single line with the ip address
-            info = res.text.split("\n")
-            current_ip = info[0]
+        with urllib.request.urlopen(provider, timeout=1.5) as res:
+            if res.status == 200:
+                # both providers return a single line with the ip address
+                info = res.read().decode().split("\n")
+                current_ip = info[0]
 
-            logging.debug(f"Public ip [{current_ip}] grabbed from [{provider}]")
-            return current_ip
+                logging.debug(f"Public ip [{current_ip}] grabbed from [{provider}]")
+                return current_ip
 
-        logging.warning(f"Provider error: [{provider}] Response: {res.status_code}")
+            logging.warning(f"Provider error: [{provider}] Response: {res.status}")
     logging.error("FATAL: All providers unavailable. IP lookup failed")
 
 
