@@ -1,4 +1,5 @@
 #!/bin/sh
+
 # Entrypoint into the docker container
 # Only used for the docker image, ignore when running on host
 

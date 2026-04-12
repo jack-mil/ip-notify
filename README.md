@@ -74,3 +74,7 @@ LOG_FILE=/data/logs.txt
 > - https://github.com/timothymiller/cloudflare-ddns
 > - https://github.com/teobouvard/turnip
 
+## License
+This source code is available for use under the terms of the MIT License. See [LICENSE](./LICENSE)
+
+© Copyright 2023-2026, jack-mil and contributors.

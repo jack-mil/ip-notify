@@ -1,3 +1,6 @@
+# Copyright 2023-2026, jack-mil and contributors
+# SPDX-License-Identifier: MIT
+
 import json
 import unittest
 from argparse import Namespace

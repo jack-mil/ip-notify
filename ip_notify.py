@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-#
-# /// script
-# requires-python = ">=3.11"
-# ///
 
+# Copyright 2023-2026, jack-mil and contributors
+# SPDX-License-Identifier: MIT
 
 import argparse
 import json
