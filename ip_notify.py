@@ -246,7 +246,7 @@ def save_current_ip(ip: str, ip_file: str):
         logger.error(f"Could not save current IP: {e}")
 
 
-if __name__ == "__main__":
+def main() -> int:
     """Run once to check current IP against old IP and notify if changed"""
 
     config = get_config()
@@ -257,7 +257,7 @@ if __name__ == "__main__":
 
     if url is None:
         logging.error("Must configure a webhook endpoint using args or env vars")
-        exit(1)
+        return 1
 
     logging.info("Checking for IP changes")
     new_ip = get_current_ip(IP_PROVIDERS)
@@ -265,6 +265,7 @@ if __name__ == "__main__":
 
     if new_ip is None:
         logging.error("Could not determine public IP. Task failed")
+        return 1
 
     elif old_ip is None or config.test:
         logging.info(f"First time detected. IP is [{new_ip}]")
@@ -278,3 +279,9 @@ if __name__ == "__main__":
 
     else:
         logging.info("No change in public IP")
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
