@@ -52,7 +52,7 @@ class TestGetConfig(unittest.TestCase):
             patch("ip_notify.get_args", return_value=args),
             patch.dict(
                 "os.environ", {"XDG_CACHE_HOME": xdg_cache, "HOME": home}, clear=True
-            ),
+            )
         ):
             config = ip_notify.get_config()
 
@@ -72,7 +72,21 @@ class TestGetConfig(unittest.TestCase):
 
         self.assertEqual(config.service, "discord")
         self.assertIsNone(config.webhook)
-        self.assertEqual(config.ip_cache, Path(home, ".config", "ip_notify_cache"))
+        self.assertEqual(config.ip_cache, Path(home, ".cache", "ip_notify_cache"))
+
+    def test_uses_user_path_home(self):
+        args = Namespace(test=False, service=None, webhook=None, cache_file=None)
+
+        with (
+            TemporaryDirectory() as home,
+            patch("ip_notify.get_args", return_value=args),
+            # patch.dict("os.environ", {"HOME": home}, clear=True),
+        ):
+            config = ip_notify.get_config()
+
+        self.assertEqual(config.service, "discord")
+        self.assertIsNone(config.webhook)
+        self.assertEqual(config.ip_cache, Path(Path.home(), ".cache", "ip_notify_cache"))
 
 
 class TestWebhookPayloads(unittest.TestCase):

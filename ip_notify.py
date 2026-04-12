@@ -49,6 +49,7 @@ def get_args() -> Namespace:
 
 
 def get_config() -> Namespace:
+    """Get the configuration values from arguments, falling back to env vars if present"""
     args = get_args()
     config = Namespace()
     config.test = args.test
@@ -63,12 +64,11 @@ def get_config() -> Namespace:
     ip_cache_path = args.cache_file or os.getenv("IP_CACHE")
     # Create the default directory if no env var
     if ip_cache_path is None:
-        cache_home = os.getenv("XDG_CACHE_HOME")
-        if cache_home is None:
-            cache_home = os.getenv("HOME") or Path.home()
+        cache_home = os.getenv("XDG_CACHE_HOME") or Path(
+            os.getenv("HOME") or Path.home(), ".cache/"
+        )
         ip_cache_path = Path(cache_home, "ip_notify_cache")
     config.ip_cache = Path(ip_cache_path)
-    config.ip_cache.parent.mkdir(parents=True, exist_ok=True)
     return config
 
 
@@ -213,7 +213,7 @@ def teams_data(config, old_ip: str, new_ip: str) -> dict:
     return payload
 
 
-def get_current_ip(providers: list[str]):
+def get_current_ip(providers: list[str]) -> str | None:
     """Uses Mullvad or Proton VPN trace service to lookup current public IP"""
     for provider in providers:
         with urllib.request.urlopen(provider, timeout=1.5) as res:
@@ -229,7 +229,7 @@ def get_current_ip(providers: list[str]):
     logging.error("FATAL: All providers unavailable. IP lookup failed")
 
 
-def get_last_ip(ip_file: str):
+def get_last_ip(ip_file: str) -> str | None:
     """Read old ip from a file"""
     if not ip_file.exists():
         logging.info("No existing ip record found")
