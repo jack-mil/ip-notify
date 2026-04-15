@@ -94,7 +94,7 @@ def setup_logging():
         logger.addHandler(file_handler)
 
 
-def send_notification(webhook_url: str, new_ip: str, old_ip: str, config):
+def send_notification(new_ip: str, old_ip: str, config):
     """Send the webhook POST request directly"""
     match config.service:
         case "discord":
@@ -107,7 +107,7 @@ def send_notification(webhook_url: str, new_ip: str, old_ip: str, config):
     payload = func(config, new_ip, old_ip)
     body = json.dumps(payload).encode("utf-8")
     request = urllib.request.Request(
-        webhook_url,
+        config.webhook,
         method="POST",
         data=body,
         headers={"Content-Type": "application/json", "User-Agent": "ip-notify/1.0"},
@@ -147,7 +147,7 @@ def discord_data(config, new_ip: str, old_ip: str) -> dict:
         "avatar_url": config.author_url,
         "embeds": [
             {
-                "title": "IP Address Changed",
+                "title": "Test Message" if config.test else "Address Changed",
                 "color": color_decimal,
                 "author": {
                     "name": "IP Notify",
@@ -251,13 +251,12 @@ def main() -> int:
     setup_logging()
 
     cache_path = config.ip_cache
-    url = config.webhook
 
-    if url is None:
+    if config.webhook is None:
         logging.error("Must configure a webhook endpoint using args or env vars")
         return 1
 
-    logging.info("Checking for IP changes")
+    logging.info("Watching for IP changes...")
     new_ip = get_current_ip(IP_PROVIDERS)
     old_ip = get_last_ip(cache_path)
 
@@ -266,13 +265,16 @@ def main() -> int:
         return 1
 
     elif old_ip is None or config.test:
-        logging.info(f"First time detected. IP is [{new_ip}]")
-        send_notification(url, new_ip, old_ip, config)
+        if config.test:
+            logging.info("Sending initial test message")
+        else:
+            logging.info(f"First time detected. IP is [{new_ip}]")
+        send_notification(new_ip, old_ip, config)
         save_current_ip(new_ip, cache_path)
 
     elif new_ip != old_ip:
         logging.info(f"Public ip changed from {old_ip} to {new_ip}")
-        send_notification(url, new_ip, old_ip, config)
+        send_notification(new_ip, old_ip, config)
         save_current_ip(new_ip, cache_path)
 
     else:
