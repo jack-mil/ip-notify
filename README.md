@@ -10,7 +10,7 @@ while away from home.
 Yes, obviously this problem is solved with a DDNS service, of which there are many.
 But, I don't have any public DNS records and only need the IP endpoint for WireGuard.
 
-Runs in a Docker container running cron every 30 minutes.
+Runs in a Docker container with `supercronic` on a configurable schedule.
 
 Can just as easily be adapted to run on the host instead.
 
@@ -22,7 +22,7 @@ Repo has moved to Codeberg, the Github mirror may not be updated indefinitely. S
 - The script `ip_notify.py` runs as a oneshot service. It caches the current ip to a file
 and checks for differences on next run
 - Run as a cron job
-- Or run the supplied docker image and/or Compose project (cron in docker)
+- Or run the supplied docker image and/or Compose project (`supercronic` in Docker)
 
 ## Args
 - `--service` The desired service to send the notification to (`discord | msteams`. Default: `discord`)
@@ -35,12 +35,14 @@ Most useful when running in Docker (See `docker-compose.yml`).
 ```
 # The webhook url. Include here or in .env file
 WEBHOOK_URL=${WEBHOOK_URL}
+# Cron expression used by the container scheduler
+SCHEDULE=*/30 * * * *
 # The service used to post webhooks to
 WEBHOOK_SERVICE=discord
 # The color of the Discord Embed in hex
 EMBED_COLOR=1bb106
 # The link when clicking the Embed author
-AUTHOR_URL=https://github.com/jack-mil/ip-notify
+AUTHOR_URL=https://codeberg.org/jack-mil/ip-notify
 # The icon for the Embed and User avatar
 ICON_URL=https://1.1.1.1/favicon.ico
 # The file (in the container) to store the previous ip
@@ -66,9 +68,8 @@ LOG_FILE=/data/logs.txt
 - Copy the webhook URL and make sure the workflow is activated
 
 ## Developing
-- Since this is a simple single-file script, the easiest method is to use [uv](https://docs.astral.sh/uv/guides/scripts/) to manage the dependencies. Inline script metadata is provided, and a lock file for dependencies. 
-
-- Dockerfile and an example Docker Compose project are provided if preferred
+- Since this is a simple single-file script, host execution can use any local Python install.
+- Dockerfile and an example Docker Compose project are provided if preferred.
 
 > Thanks to these projects for inspiration:
 > - https://github.com/timothymiller/cloudflare-ddns

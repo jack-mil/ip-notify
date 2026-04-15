@@ -1,30 +1,28 @@
-FROM python:3.11-alpine
+FROM python:3.14-alpine
 
-LABEL org.container.author="https://github.com/jack-mil"
+LABEL org.container.author="https://codeberg.org/jack-mil/ip-notify"
 
-# crond already installed but we can remove default
-RUN apk add --no-cache tini
-RUN rm -rf /etc/periodic /etc/crontabs/root
+# Latest releases available at https://github.com/aptible/supercronic/releases
+ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.44/supercronic-linux-amd64 \
+    SUPERCRONIC_SHA1SUM=6eb0a8e1e6673675dc67668c1a9b6409f79c37bc \
+    SUPERCRONIC=supercronic-linux-amd64
 
-# Install python reqs
+RUN apk add --no-cache ca-certificates curl tzdata
+
+RUN curl -fsSLO "$SUPERCRONIC_URL" \
+ && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
+ && chmod +x "$SUPERCRONIC" \
+ && mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" \
+ && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic
+
+
 WORKDIR /app
-
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+COPY --chmod=755 entrypoint.sh .
 COPY ip_notify.py .
 
-# Copy entrypoint
-COPY --chmod=744 entrypoint.sh .
+ENV EMBED_COLOR="f1c40f" \
+    IP_CACHE="/data/ip" \
+    LOG_FILE="/data/ip-notify.log" \
+    SCHEDULE="*/30 * * * *"
 
-# Copy crontab config to be installed at runtime by script
-WORKDIR /tmp
-COPY crontab .
-
-# Set default environment
-ENV EMBED_COLOR="f1c40f"
-ENV IP_CACHE="/data/ip.txt"
-
-ENTRYPOINT ["/sbin/tini", "--", "/app/entrypoint.sh"]
-
-# CMD ["python3", "/app/ip_notify.py"]
-CMD ["crond", "-f", "-l", "0"]
+ENTRYPOINT ["./entrypoint.sh"]

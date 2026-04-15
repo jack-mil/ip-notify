@@ -1,18 +1,18 @@
 #!/bin/sh
 
-# Entrypoint into the docker container
-# Only used for the docker image, ignore when running on host
+set -eu
 
-# Copy the crontab into the bind mounted directory at runtime
-# If the user hasn't overridden
-[ -f /data/crontab ] || cp -a /tmp/crontab /data
+mkdir -p /data
 
-# Install the crontab
-crontab /data/crontab
+CRONTAB_FILE="/tmp/ip-notify.crontab"
+JOB_COMMAND="python /app/ip_notify.py"
 
-# Execute once to ensure webhook working
+cat > "${CRONTAB_FILE}" <<EOF
+${SCHEDULE} ${JOB_COMMAND}
+EOF
+
+# Execute once on start to test webhook
 python /app/ip_notify.py --test
 
-# Then run the image CMD (crond -f)
-echo "$@"
-exec "$@"
+# Execute supercronic daemon
+exec /usr/local/bin/supercronic "${CRONTAB_FILE}"
