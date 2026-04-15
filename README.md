@@ -10,9 +10,9 @@ while away from home.
 Yes, obviously this problem is solved with a DDNS service, of which there are many.
 But, I don't have any public DNS records and only need the IP endpoint for WireGuard.
 
-Runs in a Docker container with `supercronic` on a configurable schedule.
+Can easily be run on a timer with cron or systemd on your host.
 
-Can just as easily be adapted to run on the host instead.
+Also can run in a Docker container with `supercronic` on a configurable schedule.
 
 Makes use of [Mullvad](https://am.i.mullvad.net/ip) or [Proton](https://ip.me) ip-lookup service.
 
@@ -44,11 +44,7 @@ EMBED_COLOR=1bb106
 # The link when clicking the Embed author
 AUTHOR_URL=https://codeberg.org/jack-mil/ip-notify
 # The icon for the Embed and User avatar
-ICON_URL=https://1.1.1.1/favicon.ico
-# The file (in the container) to store the previous ip
-IP_CACHE=/data/ip.txt
-# An additional log file (in the container)
-LOG_FILE=/data/logs.txt
+ICON_URL=
 ```
 
 ## Service configuration
@@ -68,7 +64,7 @@ LOG_FILE=/data/logs.txt
 - Copy the webhook URL and make sure the workflow is activated
 
 ## Developing
-- Since this is a simple single-file script, host execution can use any local Python install.
+- Since this is a simple no-dependency script, host execution can use any local Python 3 install.
 - Dockerfile and an example Docker Compose project are provided if preferred.
 
 > Thanks to these projects for inspiration:
